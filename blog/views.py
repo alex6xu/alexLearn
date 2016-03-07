@@ -42,6 +42,7 @@ class UserRegister(View):
         #     return HttpResponseRedirect("/user")
         try:
             if request.method=='POST':
+                print 'get post params '
                 username=request.POST.get('username','')
                 password1=request.POST.get('pwd','')
                 password2=request.POST.get('pwd2','')
@@ -53,27 +54,29 @@ class UserRegister(View):
                 if not registerForm.is_validate():
                     errors.extend(registerForm.errors.values())
                     print 'register not valid'
-                    return render_to_response("blog/userregister.html",RequestContext(request,{'curtime':curtime,'username':username,'email':email,'errors':errors}))
+                    return render_to_response("register.html",RequestContext(request,{'curtime':curtime,'username':username,'email':email,'errors':errors}))
                 if password1!=password2:
                     errors.append("两次输入的密码不一致!")
                     print 'pwd not same'
-                    return render_to_response("blog/userregister.html",RequestContext(request,{'curtime':curtime,'username':username,'email':email,'errors':errors}))
+                    return render_to_response("register.html",RequestContext(request,{'curtime':curtime,'username':username,'email':email,'errors':errors}))
 
                 filterResult = User.objects.filter(username=username)#c************
                 if len(filterResult)>0:
                     errors.append("用户名已存在")
-                    return render_to_response("blog/userregister.html",RequestContext(request,{'curtime':curtime,'username':username,'email':email,'errors':errors}))
+                    return render_to_response("register.html",RequestContext(request,{'curtime':curtime,'username':username,'email':email,'errors':errors}))
 
+                print 'save user to db before'
                 user=User()#d************************
                 user.username=username
                 user.set_password(password1)
                 user.email=email
                 user.save()
+                print 'saved user info to db'
                 #用户扩展信息 profile
-                profile=AuthUser()#e*************************
-                profile.user_id=user.id
-                profile.phone=phone
-                profile.save()
+                # profile=AuthUser()#e*************************
+                # profile.user_id=user.id
+                # profile.phone=phone
+                # profile.save()
                 #登录前需要先验证
                 newUser=auth.authenticate(username=username,password=password1)#f***************
                 if newUser is not None:
@@ -81,9 +84,9 @@ class UserRegister(View):
                     return HttpResponseRedirect("/user")
         except Exception,e:
             errors.append(str(e))
-            return render_to_response("blog/userregister.html",RequestContext(request,{'curtime':curtime,'username':username,'email':email,'errors':errors}))
+            return render_to_response("register.html",RequestContext(request,{'curtime':curtime,'username':username,'email':email,'errors':errors}))
 
-        return render_to_response("blog/userregister.html",RequestContext(request,{'curtime':curtime}))
+        return render_to_response("register.html",RequestContext(request,{'curtime':curtime}))
 
         # jstr = {'result':1}
         # return HttpResponse(jstr)

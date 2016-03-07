@@ -7,5 +7,10 @@
       <schema-pattern>alex.*</schema-pattern>
       <default-schemas>alex.*</default-schemas>
     </data-source>
+    <data-source name="Django default" uuid="32c96177-6a5f-4772-8038-8fc49b2cf5d8">
+      <first-sync>true</first-sync>
+      <user-name>root</user-name>
+      <user-password>dfc7dfcbdfc9</user-password>
+    </data-source>
   </component>
 </project>

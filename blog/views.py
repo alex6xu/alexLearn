@@ -36,24 +36,33 @@ class UserRegister(View):
     def post(self,request):
         print 'post register start'
         curtime=time.strftime("%Y-%m-%d %H:%M:%S",time.localtime())
+        print 'request.user ', request.user
 
-        # if request.user.is_authenticated():#a*******************
-        #     print 'user authenticated !'
-        #     return HttpResponseRedirect("/user")
+        if request.user.is_authenticated():#a*******************
+            print 'user authenticated !'
+            return HttpResponseRedirect("/user")
+
         try:
+            print 'get params'
             if request.method=='POST':
+                print 'post method'
                 username=request.POST.get('username','')
+                print username
                 password1=request.POST.get('pwd','')
+                print password1
                 password2=request.POST.get('pwd2','')
+                print password2
                 email=request.POST.get('email','')
+                print email
                 phone=request.POST.get('phone','')
+                print phone
                 errors=[]
 
-                registerForm = RegisterForm({'username':username,'password1':password1,'password2':password2,'email':email})#b********
-                if not registerForm.is_validate():
-                    errors.extend(registerForm.errors.values())
-                    print 'register not valid'
-                    return render_to_response("blog/userregister.html",RequestContext(request,{'curtime':curtime,'username':username,'email':email,'errors':errors}))
+                #registerForm = RegisterForm({'username':username,'password1':password1,'password2':password2,'email':email})#b********
+                # if not registerForm.is_valid():
+                #     errors.extend(registerForm.errors.values())
+                #     print 'register not valid'
+                #     return render_to_response("blog/userregister.html",RequestContext(request,{'curtime':curtime,'username':username,'email':email,'errors':errors}))
                 if password1!=password2:
                     errors.append("两次输入的密码不一致!")
                     print 'pwd not same'
@@ -70,20 +79,21 @@ class UserRegister(View):
                 user.email=email
                 user.save()
                 #用户扩展信息 profile
-                profile=AuthUser()#e*************************
-                profile.user_id=user.id
-                profile.phone=phone
-                profile.save()
+                # profile=AuthUser()#e*************************
+                # profile.user_id=user.id
+                # profile.phone=phone
+                # profile.save()
                 #登录前需要先验证
                 newUser=auth.authenticate(username=username,password=password1)#f***************
                 if newUser is not None:
                     auth.login(request, newUser)#g*******************
                     return HttpResponseRedirect("/user")
         except Exception,e:
+            print e
             errors.append(str(e))
             return render_to_response("blog/userregister.html",RequestContext(request,{'curtime':curtime,'username':username,'email':email,'errors':errors}))
 
-        return render_to_response("blog/userregister.html",RequestContext(request,{'curtime':curtime}))
+        return render_to_response("blog/index.html",RequestContext(request,{'curtime':curtime}))
 
         # jstr = {'result':1}
         # return HttpResponse(jstr)

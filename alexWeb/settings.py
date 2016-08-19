@@ -36,6 +36,7 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'myuser.apps.MyuserConfig',
+    'captcha',
     'blog.apps.BlogConfig',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -84,7 +85,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'alex',
         'USER': 'root',
-        'PASSWORD': 'mac',
+        'PASSWORD': 'bdyun',
         'HOST': '',
         'PORT': ''
     }

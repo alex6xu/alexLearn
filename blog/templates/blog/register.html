@@ -7,12 +7,26 @@
 <body>
     <form name="register" action="/blog/register" method="post">
         {% csrf_token %}
-        用户名：<input id="username" name="username" type="text"><br>
-        密码：  <input id="pwd" name="pwd" type="password"><br>
-        重复密码：<input id="pwd2" type="password" name="pwd2"><br>
-        phone : <input id="phone" name="phone" type="text"><br>
-        email : <input id="email" name="email" type="text"><br>
-        <input type="submit" >
+{#        {% for item in form %}#}
+{#        {{ item.label_tag }}{{ item }}<br>#}
+{#        {{ item.errors }}#}
+{#        {% endfor %}#}
+        <table>
+        {% for field in form %}
+            <tr>
+                <td>{{ field.label_tag }}</td>
+                <td>{{ field }}</td>
+                <td>{{ field.errors }}</td>
+            </tr>
+        {% endfor %}
+        </table>
+
+{#        用户名：<input id="username" name="username" type="text"><br>#}
+{#        密码：  <input id="pwd" name="pwd" type="password"><br>#}
+{#        重复密码：<input id="pwd2" type="password" name="pwd2"><br>#}
+{#        phone : <input id="phone" name="phone" type="text"><br>#}
+{#        email : <input id="email" name="email" type="text"><br>#}
+        <input type="submit" value="提交">
     </form>
 
 </body>

@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
 from django.shortcuts import render,render_to_response
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest,JsonResponse
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, JsonResponse
 from django.views.decorators.csrf import csrf_protect
 from django.views.generic import View
 from django.utils.decorators import method_decorator
@@ -11,16 +11,25 @@ from django.contrib import auth
 from django.contrib.auth.models import User
 import time
 from django.template import RequestContext
-from myuser.models import *
+# from myuser.models import *
 from django import forms
+from captcha.fields import CaptchaField
+
 
 class RegisterForm(forms.Form):
-  username = forms.CharField()
-  email = forms.EmailField()
-  password = forms.CharField(widget=forms.PasswordInput)
-  password2= forms.CharField(label='Confirm',widget=forms.PasswordInput)
-  def is_validate(self):
-    return self.password==self.password2
+    username = forms.CharField(max_length=20,label='name')
+    email = forms.EmailField(max_length=64,label='email')
+    password = forms.CharField(widget=forms.PasswordInput)
+    password2= forms.CharField(label='Confirm',widget=forms.PasswordInput)
+    phone = forms.CharField(max_length=11,label='phone')
+    checkcode = CaptchaField()
+
+
+
+class LoginForm(forms.Form):
+    username = forms.CharField(max_length=20,label='name')
+    password = forms.CharField(widget=forms.PasswordInput)
+
 
 # Create your views here.
 class IndexView(View):
@@ -30,8 +39,9 @@ class IndexView(View):
 
 class UserRegister(View):
     def get(self,requset):
+        forms = RegisterForm()
 
-        return render(requset,'blog/register.html')
+        return render(requset,'blog/register.html',{'form':forms})
 
     def post(self,request):
         print 'post register start'
@@ -39,8 +49,9 @@ class UserRegister(View):
         print 'request.user ', request.user
 
         if request.user.is_authenticated():#a*******************
-            print 'user authenticated !'
-            return HttpResponseRedirect("/user")
+            errors ='user authenticated !'
+            print errors
+            return HttpResponseRedirect("/blog/user/"+str(request.user))
 
         try:
             print 'get params'
@@ -48,9 +59,9 @@ class UserRegister(View):
                 print 'post method'
                 username=request.POST.get('username','')
                 print username
-                password1=request.POST.get('pwd','')
+                password1=request.POST.get('password','')
                 print password1
-                password2=request.POST.get('pwd2','')
+                password2=request.POST.get('password2','')
                 print password2
                 email=request.POST.get('email','')
                 print email
@@ -59,11 +70,13 @@ class UserRegister(View):
                 errors=[]
 
 
-                registerForm = RegisterForm({'username':username,'password1':password1,'password2':password2,'email':email})#b********
-                if not registerForm.is_validate():
+                registerForm = RegisterForm(request.POST)#b********
+                if not registerForm.is_valid():
                     errors.extend(registerForm.errors.values())
                     print 'register not valid'
-                    return render_to_response("register.html",RequestContext(request,{'curtime':curtime,'username':username,'email':email,'errors':errors}))
+                    return render_to_response("blog/userregister.html",RequestContext(request,{'curtime':curtime,'username':username,'email':email,'errors':errors}))
+                else:
+                    human = True
                 if password1!=password2:
                     errors.append("两次输入的密码不一致!")
                     print 'pwd not same'
@@ -72,13 +85,14 @@ class UserRegister(View):
                 filterResult = User.objects.filter(username=username)#c************
                 if len(filterResult)>0:
                     errors.append("用户名已存在")
-                    return render_to_response("register.html",RequestContext(request,{'curtime':curtime,'username':username,'email':email,'errors':errors}))
 
-                print 'save user to db before'
-                user=User()#d************************
-                user.username=username
-                user.set_password(password1)
-                user.email=email
+                    print 'user exist'
+                    return render_to_response("blog/userregister.html",RequestContext(request,{'curtime':curtime,'username':username,'email':email,'errors':errors}))
+
+                user=User.objects.create_user(username=username,password=password1,email=email)#d************************
+                # user.username=username
+                # user.set_password(password1)
+                # user.email=email
                 user.save()
                 print 'saved user info to db'
                 #用户扩展信息 profile
@@ -90,7 +104,7 @@ class UserRegister(View):
                 newUser=auth.authenticate(username=username,password=password1)#f***************
                 if newUser is not None:
                     auth.login(request, newUser)#g*******************
-                    return HttpResponseRedirect("/user")
+                    return HttpResponseRedirect("/blog/user/"+str(username))
         except Exception,e:
             print e
             errors.append(str(e))
@@ -101,21 +115,33 @@ class UserRegister(View):
         # jstr = {'result':1}
         # return HttpResponse(jstr)
 
+def loginUser(request):
+    if request.method is "GET":
+        pass
+        return render(request,'')
+
 class LoginView(View):
     def get(self,request):
+        form = LoginForm()
 
-        return render(request,'blog/login.html')
+        return render(request,'blog/login.html' , {'form':form})
 
     def post(self,request):
 
         username = request.POST.get('username')
-        password = request.POST.get('passwd')
-        uu = {}
+        password = request.POST.get('password')
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            # human = True
+            user = auth.authenticate(username=username,password=password)
+            # if user:
+            #     auth.login(request,user)
+        loginstatus = dict()
         try:
             user = auth.authenticate(username=username, password=password)
             #user = User.objects.filter(username=username)
 
-            if(user and user.is_active == 1):
+            if(user is not None and user.is_active):
                 auth.login(request,user)
                 #if(user_pass):
                 result = 1
@@ -125,13 +151,19 @@ class LoginView(View):
                 first_name = user[0].first_name
                 last_name = user[0].last_name
                 email = user[0].email
-                uu = {'res':result, 'id':userid,'username': username ,'last_login':last_login,'is_superuser':is_superuser
+                loginstatus = {'res':result, 'id':userid,'username': username ,'last_login':last_login,'is_superuser':is_superuser
                           , 'first_name':first_name,'last_name':last_name,'email':email }
-                return HttpResponseRedirect('blog/index.html')
+                return render(request,'blog/index.html',loginstatus)
+
+            else:
+                result = -1
+                messg = 'auth failed'
+                return render(request, 'blog/login.html')
+
 
         except Exception, e:
             print e
-            return HttpResponseRedirect("blog/login.html")
+            return render(request,"blog/login.html")
 
 
 

@@ -37,6 +37,9 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'myuser.apps.MyuserConfig',
     'captcha',
+    'userauth.apps.UserauthConfig',
+    'appserver.apps.AppConfig',
+    'forum.apps.ForumConfig',
     'blog.apps.BlogConfig',
     'django.contrib.admin',
     'django.contrib.auth',
